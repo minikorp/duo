@@ -4,7 +4,6 @@ plugins {
 
 kotlin {
     val kspVersion: String by project
-
     jvm()
     sourceSets {
         val jvmMain by getting {

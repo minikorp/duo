@@ -2,14 +2,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
-    id("maven-publish")
-}
-
-group = "com.minikorp.drill"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
 }
 
 kotlin {
@@ -42,21 +34,5 @@ kotlin {
             }
         }
         val jvmTest by getting
-    }
-}
-
-
-val publicationsFromMainHost =
-    listOf(kotlin.jvm()).map { it.name } + "kotlinMultiplatform"
-
-publishing {
-    publications {
-        matching { it.name in publicationsFromMainHost }.all {
-            val targetPublication = this@all
-            tasks.withType<AbstractPublishToMaven>()
-                .matching { it.publication == targetPublication }
-                .configureEach { }
-//                .configureEach { onlyIf { findProperty("isMainHost") == "true" } }
-        }
     }
 }
