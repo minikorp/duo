@@ -9,6 +9,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.visitor.KSDefaultVisitor
 import com.minikorp.drill.DefaultDrillType
+import com.minikorp.drill.Drill
 import com.minikorp.drill.DrillProperty
 import com.minikorp.drill.DrillType
 import com.minikorp.duo.State
@@ -27,11 +28,12 @@ class DrillClassGenerator(val drillClass: DrillClassModel) : Generator {
 
     companion object {
         fun resolveGenerators(): List<Generator> {
-            val drillSymbols =
-                resolver.getSymbolsWithAnnotation(State::class.qualifiedName.toString()).toList()
-            if (drillSymbols.isEmpty()) return emptyList()
+            val stateSymbols = resolver.getSymbolsWithAnnotation(State::class.qualifiedName.toString())
+            val drillSymbols = resolver.getSymbolsWithAnnotation(Drill::class.qualifiedName.toString())
+            val allSymbols = (stateSymbols + drillSymbols).toList()
+            if (allSymbols.isEmpty()) return emptyList()
 
-            drillSymbols.forEach { symbol ->
+            allSymbols.forEach { symbol ->
                 symbol.accept(
                     object : KSDefaultVisitor<Unit, Unit>() {
                         override fun defaultHandler(node: KSNode, data: Unit) = Unit

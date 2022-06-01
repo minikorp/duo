@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 buildscript {
     repositories {
         gradlePluginPortal()
@@ -35,14 +37,15 @@ subprojects {
     apply(plugin = "maven-publish")
     publishing {
         publications {
-
+            val githubUsername: String? by gradleLocalProperties(rootDir)
+            val githubToken: String? by gradleLocalProperties(rootDir)
             repositories {
                 maven {
                     name = "GitHubPackages"
                     url = uri("https://maven.pkg.github.com/minikorp/duo")
                     credentials {
-                        username = "minikorp"
-                        password = System.getenv("GITHUB_TOKEN")
+                        username = githubUsername ?: System.getenv("GITHUB_USERNAME")
+                        password = githubToken ?: System.getenv("GITHUB_TOKEN")
                     }
                 }
             }
@@ -50,9 +53,9 @@ subprojects {
             matching { it.name in publicationsFromMainHost }.all {
                 this as MavenPublication
 
-                groupId = "com.minikorp"
-                version = "1.0.0"
+                groupId = "com.minikorp.duo"
                 artifactId = subproject.name
+                version = "1.0.0"
 
                 val targetPublication = this@all
                 tasks.withType<AbstractPublishToMaven>()
