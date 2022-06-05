@@ -1,16 +1,16 @@
 package com.minikorp.drill
 
-//TODO: NOT fully implemented
 
 @Suppress("UNCHECKED_CAST")
-internal class DrillSet<Immutable, Mutable>(
+class DrillSet<SetType : Set<Immutable>, Immutable, Mutable>(
     ref: Set<Immutable>,
-    parent: DrillType<*>?,
-    private val mutate: (container: DrillType<*>, Immutable) -> Mutable,
+    parent: Drillable<*>?,
+    private val factory: (Sequence<Immutable>) -> SetType,
+    private val mutate: (container: Drillable<*>, Immutable) -> Mutable,
     private val freeze: (Mutable) -> Immutable
-) : MutableSet<Mutable>, DefaultDrillType<Set<Immutable>>(ref, parent) {
+) : MutableSet<Mutable>, DefaultDrillable<Set<Immutable>>(ref, parent) {
 
-    private inner class Entry(ref: Immutable) : DefaultDrillType<Immutable>(ref, this) {
+    private inner class Entry(ref: Immutable) : DefaultDrillable<Immutable>(ref, this) {
         var backing: Any? = UNSET_VALUE
         var value: Mutable
             get() {
@@ -31,7 +31,7 @@ internal class DrillSet<Immutable, Mutable>(
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            val casted = other as? DrillSet<*, *>.Entry
+            val casted = other as? DrillSet<*, *, *>.Entry
             if (ref() != casted?.ref()) return false
             if (backing != casted?.backing) return false
             return true
@@ -118,10 +118,11 @@ internal class DrillSet<Immutable, Mutable>(
     }
 }
 
-internal fun <Immutable, Mutable> Set<Immutable>.toMutable(
-    parent: DrillType<*>? = null,
-    mutate: (container: DrillType<*>, Immutable) -> Mutable,
+fun <SetType : Set<Immutable>, Immutable, Mutable> SetType.toMutable(
+    parent: Drillable<*>? = null,
+    factory: (Sequence<Immutable>) -> SetType,
+    mutate: (container: Drillable<*>, Immutable) -> Mutable,
     freeze: (Mutable) -> Immutable
-): DrillSet<Immutable, Mutable> {
-    return DrillSet(this, parent, mutate, freeze)
+): DrillSet<SetType, Immutable, Mutable> {
+    return DrillSet(this, parent, factory, mutate, freeze)
 }

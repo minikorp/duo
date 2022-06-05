@@ -43,9 +43,7 @@ class MainReducer : Reducer<MainState> {
             loading = true
         )
         delay(1000)
-        ctx.mutableState = ctx.state.mutate {
-            number += action.count
-        }
+        ctx.mutableState = ctx.state.copy(number = ctx.state.number + action.count)
         ctx.mutableState = ctx.state.copy(
             loading = false
         )

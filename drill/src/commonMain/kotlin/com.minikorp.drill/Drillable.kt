@@ -11,12 +11,12 @@ object UNSET_VALUE {
 /**
  * Base interface for mutable types, with method properties to avoid name collisions with user classes.
  */
-interface DrillType<T> {
+interface Drillable<T> {
 
     fun ref(): T
 
     /** Parent mutable type, dirty state will propagate upwards when mutating and object. */
-    fun parent(): DrillType<*>?
+    fun parent(): Drillable<*>?
 
     /** Indicates if this object has been mutated and needs to be recreated when frozen. */
     fun dirty(): Boolean
@@ -37,10 +37,10 @@ interface DrillType<T> {
 /**
  * Basic implementation with actual backing properties.
  */
-abstract class DefaultDrillType<T>(
+abstract class DefaultDrillable<T>(
     private var ref: T,
-    private val parent: DrillType<*>?
-) : DrillType<T> {
+    private val parent: Drillable<*>?
+) : Drillable<T> {
 
     private var dirty: Boolean = false
 
@@ -62,7 +62,7 @@ abstract class DefaultDrillType<T>(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        val casted = other as? DefaultDrillType<*>
+        val casted = other as? DefaultDrillable<*>
         if (ref != casted?.ref) return false
         return true
     }

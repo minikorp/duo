@@ -87,7 +87,7 @@ data class StateClassGenerator(val stateAnnotatedClass: StateAnnotatedClass) : G
             stateAnnotatedClass.syntheticHandlerClassName.simpleName,
         )
 
-    override fun initialize() {
+    override fun buildModel() {
         flattenIntoSlices(emptyList(), stateAnnotatedClass)
     }
 

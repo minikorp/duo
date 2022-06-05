@@ -1,6 +1,5 @@
 package com.minikorp.duo
 
-import com.minikorp.drill.DrillType
 import kotlinx.coroutines.Job
 
 

@@ -3,16 +3,16 @@ package com.minikorp.drill
 
 @Suppress("UNCHECKED_CAST")
 class DrillMap<MapType : Map<K, Immutable>, K, Immutable, Mutable>(
-    parent: DrillType<*>?,
+    parent: Drillable<*>?,
     ref: MapType,
     private val factory: (Map<K, Immutable>) -> MapType,
-    private val mutate: (container: DrillType<*>, Immutable) -> Mutable,
+    private val mutate: (container: Drillable<*>, Immutable) -> Mutable,
     private val freeze: (Mutable) -> Immutable
-) : MutableMap<K, Mutable>, DefaultDrillType<MapType>(ref, parent) {
+) : MutableMap<K, Mutable>, DefaultDrillable<MapType>(ref, parent) {
 
     private inner class Entry(
         override val key: K, ref: Immutable
-    ) : DefaultDrillType<Immutable>(ref, this), MutableMap.MutableEntry<K, Mutable> {
+    ) : DefaultDrillable<Immutable>(ref, this), MutableMap.MutableEntry<K, Mutable> {
         var backing: Any? = UNSET_VALUE
 
         override var value: Mutable
@@ -172,7 +172,7 @@ class DrillMap<MapType : Map<K, Immutable>, K, Immutable, Mutable>(
             val existed = ref().containsKey(item.key)
             if (existed) {
                 val oldValue = ref()[item.key]
-                if (item.value.backing is DrillType<*>) {
+                if (item.value.backing is Drillable<*>) {
                     if (oldValue != item.value.backing) {
                         sb.append("\n~ ${item.key.toQuotedString()}: ${item.value.toQuotedString()}")
                     }
@@ -200,9 +200,9 @@ class DrillMap<MapType : Map<K, Immutable>, K, Immutable, Mutable>(
 
 
 fun <MapType : Map<K, Immutable>, K, Immutable, Mutable> MapType.toMutable(
-    parent: DrillType<*>? = null,
+    parent: Drillable<*>? = null,
     factory: (Map<K, Immutable>) -> MapType,
-    mutate: (container: DrillType<*>, Immutable) -> Mutable,
+    mutate: (container: Drillable<*>, Immutable) -> Mutable,
     freeze: (Mutable) -> Immutable
 ): DrillMap<MapType, K, Immutable, Mutable> {
     return DrillMap(

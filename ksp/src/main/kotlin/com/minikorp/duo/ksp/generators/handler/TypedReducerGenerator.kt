@@ -124,7 +124,7 @@ class TypedHandlerGenerator(private val classDeclaration: KSClassDeclaration) : 
 
     private val extensionFunctionName = "${rootFunction.simpleName.asString()}Typed"
 
-    override fun initialize() {
+    override fun buildModel() {
     }
 
     override fun emit() {

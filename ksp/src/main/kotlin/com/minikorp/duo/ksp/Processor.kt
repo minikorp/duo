@@ -3,7 +3,7 @@ package com.minikorp.duo.ksp
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.minikorp.duo.ksp.generators.drill.DrillClassGenerator
+import com.minikorp.duo.ksp.generators.drill.DrillGenerator
 import com.minikorp.duo.ksp.generators.state.StateClassGenerator
 import com.minikorp.duo.ksp.generators.handler.TypedHandlerGenerator
 
@@ -15,10 +15,11 @@ class Processor : SymbolProcessor {
         lateResolver = resolver
         try {
             val out = StateClassGenerator.resolveGenerators() +
-                    TypedHandlerGenerator.resolveGenerators() +
-                    DrillClassGenerator.resolveGenerators()
-            out.forEach { it.initialize() }
+                    TypedHandlerGenerator.resolveGenerators()
+            out.forEach { it.buildModel() }
             out.forEach { it.emit() }
+
+            DrillGenerator.generate()
         } catch (compilationException: CompilationException) {
             logger.error(compilationException.message, compilationException.node)
         }

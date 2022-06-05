@@ -3,12 +3,12 @@ package com.minikorp.drill
 
 @Suppress("UNCHECKED_CAST")
 class DrillList<ListType : List<Immutable>, Immutable, Mutable>(
-    parent: DrillType<*>?,
+    parent: Drillable<*>?,
     ref: ListType,
     private val factory: (Sequence<Immutable>) -> ListType,
-    private val mutate: (container: DrillType<*>, Immutable) -> Mutable,
+    private val mutate: (container: Drillable<*>, Immutable) -> Mutable,
     private val freeze: (Mutable) -> Immutable
-) : MutableList<Mutable>, DefaultDrillType<ListType>(ref, parent) {
+) : MutableList<Mutable>, DefaultDrillable<ListType>(ref, parent) {
 
     constructor(other: DrillList<ListType, Immutable, Mutable>) : this(
         parent = other.parent(),
@@ -20,7 +20,7 @@ class DrillList<ListType : List<Immutable>, Immutable, Mutable>(
 
     private inner class Entry(
         ref: Immutable
-    ) : DefaultDrillType<Immutable>(ref, this) {
+    ) : DefaultDrillable<Immutable>(ref, this) {
         var backing: Any? = UNSET_VALUE
         var value: Mutable
             get() {
@@ -197,9 +197,9 @@ class DrillList<ListType : List<Immutable>, Immutable, Mutable>(
 }
 
 fun <ListType : List<Immutable>, Immutable, Mutable> ListType.toMutable(
-    parent: DrillType<*>? = null,
+    parent: Drillable<*>? = null,
     factory: (Sequence<Immutable>) -> ListType,
-    mutate: (container: DrillType<*>, Immutable) -> Mutable,
+    mutate: (container: Drillable<*>, Immutable) -> Mutable,
     freeze: (Mutable) -> Immutable
 ): DrillList<ListType, Immutable, Mutable> {
     return DrillList(
