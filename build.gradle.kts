@@ -55,7 +55,7 @@ subprojects {
 
                 groupId = "com.minikorp.duo"
                 artifactId = subproject.name
-                version = "1.0.0"
+                version = "1.0.1"
 
                 val targetPublication = this@all
                 tasks.withType<AbstractPublishToMaven>()
