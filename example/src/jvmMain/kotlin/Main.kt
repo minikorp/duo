@@ -34,7 +34,11 @@ data class IncrementAction(val count: Int = 1) : Action
 class MainReducer : Reducer<MainState> {
 
     @TypedReducer.Fun
-    suspend fun reduceIncrement(ctx: ActionContext<MainState>, action: IncrementAction) {
+    suspend fun reduceIncrement(
+        ctx: ActionContext<MainState>,
+        action: IncrementAction,
+        potato: String
+    ) {
         ctx.mutableState = ctx.state.copy(
             loading = true
         )
@@ -50,6 +54,23 @@ class MainReducer : Reducer<MainState> {
     @TypedReducer.Root
     override suspend fun reduce(ctx: ActionContext<MainState>) {
         reduceTyped(ctx)
+    }
+}
+
+class ActualPureReducer : Reducer<AppState> {
+    @TypedReducer.Fun
+    fun sayPotato(state: AppState, action: Action): AppState {
+        TODO()
+    }
+
+    @TypedReducer.Fun
+    fun sayPotato2(state: AppState, action: Action): AppState {
+        TODO()
+    }
+
+    @TypedReducer.Root
+    override suspend fun reduce(ctx: ActionContext<AppState>) {
+        ctx.mutableState = reduceTyped(ctx) ?: ctx.state
     }
 }
 

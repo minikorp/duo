@@ -1,22 +1,11 @@
 package com.minikorp.duo.ksp.generators.handler
 
 import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.KSNode
-import com.google.devtools.ksp.symbol.KSValueParameter
-import com.google.devtools.ksp.symbol.Modifier
+import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.visitor.KSDefaultVisitor
 import com.minikorp.duo.ActionContext
 import com.minikorp.duo.TypedReducer
-import com.minikorp.duo.ksp.CompilationException
-import com.minikorp.duo.ksp.Generator
-import com.minikorp.duo.ksp.asClassName
-import com.minikorp.duo.ksp.codeGenerator
-import com.minikorp.duo.ksp.createNewFile
-import com.minikorp.duo.ksp.isAnnotatedWith
-import com.minikorp.duo.ksp.isSuspending
-import com.minikorp.duo.ksp.resolver
+import com.minikorp.duo.ksp.*
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -29,8 +18,12 @@ private val reducerClasses = HashMap<String, TypedHandlerGenerator>()
 
 fun resolveGenerators(): List<Generator> {
     val reducerSymbols =
-        resolver.getSymbolsWithAnnotation(TypedReducer.Root::class.qualifiedName.toString())
-            .toList()
+        (resolver.getSymbolsWithAnnotation(
+            TypedReducer.Root::class.qualifiedName.toString()
+        ) + resolver.getSymbolsWithAnnotation(
+            TypedReducer.Fun::class.qualifiedName.toString()
+        )).toList()
+
     if (reducerSymbols.isEmpty()) return emptyList()
 
     reducerSymbols.forEach { symbol ->
@@ -43,6 +36,10 @@ fun resolveGenerators(): List<Generator> {
                             function,
                             "@${TypedReducer::class.simpleName} functions must be declared inside a class",
                         )
+                    // Don't generate code for interfaces
+                    if (container.classKind == ClassKind.INTERFACE) {
+                        logger.warn("Skipping ${container.simpleName}")
+                    }
                     val id = TypedHandlerGenerator.id(container)
                     if (reducerClasses[id] == null) {
                         reducerClasses[id] = TypedHandlerGenerator(container)
@@ -114,10 +111,11 @@ class TypedHandlerGenerator(private val classDeclaration: KSClassDeclaration) : 
         }
 
     private val parameter = run {
-        rootFunction.parameters.firstOrNull()?.type?.toTypeName() ?: throw CompilationException(
-            rootFunction,
-            "The root function must have a parameter of type ${ActionContext::class.simpleName}<T> ",
-        )
+        runCatching { rootFunction.parameters.firstOrNull()?.type?.toTypeName() }.getOrNull()
+            ?: throw CompilationException(
+                rootFunction,
+                "The root function must have a parameter of type ${ActionContext::class.simpleName}<T> ",
+            )
     }
 
     private val functions = classDeclaration.getAllFunctions()
@@ -131,7 +129,7 @@ class TypedHandlerGenerator(private val classDeclaration: KSClassDeclaration) : 
 
     override fun emit() {
         val whenCase = CodeBlock.builder()
-            .beginControlFlow("val out = when (val action = ctx.action)")
+            .beginControlFlow("val out = when (ctx.action)")
             .apply {
                 functions.forEach { function ->
                     add("is %T -> ", function.actionParam.type)
@@ -177,13 +175,18 @@ class TypedHandlerGenerator(private val classDeclaration: KSClassDeclaration) : 
         val params = functionDeclaration.parameters.map { Param(it) }
 
         val actionParam: Param = params.find { it.name == "action" }
-            ?: throw CompilationException(functionDeclaration, "Missing action parameter")
-
-        val suspending = functionDeclaration.modifiers.contains(Modifier.SUSPEND)
+            ?: throw CompilationException(
+                functionDeclaration,
+                "Missing parameter named action, found ${params.map { it.name }}"
+            )
 
         val callCodeBlock = CodeBlock.builder()
             .addStatement(
-                "$name(${params.joinToString(separator = ", ") { "${it.name} = ${it.name}" }})",
+                "$name(${
+                    params.joinToString(separator = ", ") {
+                        "${it.name} = ctx[\"${it.name}\"]${if (!it.type.isNullable) "!!" else ""}"
+                    }
+                })",
                 *params.map { it.type }.toTypedArray(),
             )
             .build()

@@ -35,7 +35,7 @@ data class ActionContext<S : Any>(
      * @param parentContext The parent context, or null to avoid context propagation
      * @see [Store.dispatch]
      */
-    suspend fun dispatch(action: Action, parentContext: ActionContext<S>?) {
+    suspend fun dispatch(action: Action, parentContext: ActionContext<S>? = this) {
         store.dispatch(action, parentContext)
     }
 
@@ -46,7 +46,7 @@ data class ActionContext<S : Any>(
      * @param parentContext The parent context, or null to avoid context propagation
      * @see [Store.offer]
      */
-    fun offer(action: Action, parentContext: ActionContext<S>?): Job {
+    fun offer(action: Action, parentContext: ActionContext<S>? = this): Job {
         return store.offer(action, parentContext)
     }
 
@@ -57,11 +57,22 @@ data class ActionContext<S : Any>(
 
     @Suppress("UNCHECKED_CAST")
     operator fun <T> get(key: String): T? {
-        return extra[key] as? T?
+        return (when (key) {
+            "ctx", "context" -> return this as T?
+            "action" -> return action as T?
+            "store" -> return store as T?
+            "state" -> return state as T?
+            else -> extra[key]
+        }) as? T
     }
 
     operator fun <T> set(key: String, value: T) {
-        extra[key] = value
+        (when (key) {
+            "action",
+            "store",
+            "state" -> throw UnsupportedOperationException("$key is not mutable ")
+            else -> extra[key] = value
+        })
     }
 
     /**
